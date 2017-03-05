@@ -3,6 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+struct Clearing
+{
+    public float delay;
+    public Transform Obj;
+}
+
 public class Grid : MonoBehaviour {
     public static float size = 1.28f;
     public static int iGridW = 10;
@@ -11,7 +17,7 @@ public class Grid : MonoBehaviour {
     public Sprite sConnected;
     public static Sprite Connected;
     public GameObject Score;
-    private static List<Transform> tClear;
+    private static List<Clearing> tClear;
 
     private static int iScore;
     private int iShowScore;
@@ -20,7 +26,7 @@ public class Grid : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
         tGrid = new Transform[iGridW, iGridH];
-        tClear = new List<Transform>();
+        tClear = new List<Clearing>();
         Connected = sConnected;
         iShowScore = 0;
         iScore = 0;
@@ -29,7 +35,8 @@ public class Grid : MonoBehaviour {
     // Update is called once per frame
     void Update()
     {
-        if (Time.time - fTime > 0.1)
+        var Elapsed = Time.time - fTime;
+        if (Elapsed > 0.01)
         {
             if (iScore != iShowScore)
             {
@@ -46,24 +53,33 @@ public class Grid : MonoBehaviour {
                 Score.GetComponent<Text>().text = "Score: " + iShowScore;
             }
 
-            List<Transform> ttClear = new List<Transform>();
-            foreach (Transform child in tClear)
+            List<Clearing> ttClear = new List<Clearing>();
+            
+            //foreach (Clearing child in tClear)
+            for(int i = 0; i< tClear.Count; i++)
             {
-                var dist = (new Vector3(14,22,0)) - child.position;
+                if(tClear[i].delay > Elapsed) {
+                    Clearing child = tClear[i];
+                    child.delay -= Elapsed;
+                    tClear[i] = child;
+                    continue;
+                }
+                var dist = (new Vector3(14,22,0)) - tClear[i].Obj.position;
                 if (dist.magnitude < 1)
                 {
-                    ttClear.Add(child);
+                    ttClear.Add(tClear[i]);
+                    iScore += 10;
                 }
                 else
                 {
-                    child.position += dist * 0.1f;
+                    tClear[i].Obj.position += dist * 0.1f;
                 }
             }
-            foreach (Transform child in ttClear)
+            foreach (Clearing child in ttClear)
             {
 
                 tClear.Remove(child);
-                Destroy(child.gameObject);
+                Destroy(child.Obj.gameObject);
             }
 
             fTime = Time.time;
@@ -109,24 +125,31 @@ public class Grid : MonoBehaviour {
         for (int j = 0; j < iGridH; )
         {
             if (!RowCompleted(j)) { j++; continue; }
-            ClearRow(j);
+            ClearRow(j, c);
             c++;
         }
-
-        iScore += c * 100;
     }
     public static void Connect(int Col, int Row)
     {
         Get(Col, Row).GetComponent<SpriteRenderer>().sprite = Connected;
     }
 
-    private static void ClearRow(int Row)
+    private static void ClearRow(int Row, int cleared)
     {
         for (int i = 0; i < iGridW; i++)
         {
             //Destroy(tGrid[i, Row].gameObject);
-            tClear.Add(tGrid[i, Row]);
-            tGrid[i, Row].position += new Vector3(0, 2.56f / (i+1), 0);
+            Clearing child;
+            if (cleared % 2 == 0)
+            {
+                child.delay = 0.1f * i + cleared;
+            }
+            else
+            {
+                child.delay = 0.1f * (9 - i) + cleared;
+            }
+            child.Obj = tGrid[i, Row];
+            tClear.Add(child);
             tGrid[i, Row] = null;
         }
 
