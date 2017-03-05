@@ -11,6 +11,7 @@ public class Piece : MonoBehaviour {
         {
             Debug.Log("GAME OVER");
             Destroy(gameObject);
+            enabled = false;
         }
 	}
 	

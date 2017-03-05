@@ -18,6 +18,13 @@ public class NewPiece : MonoBehaviour {
         if (Time.time - Elapsed > 1)
         {
             List<GameObject> forDestroy = new List<GameObject>();
+            foreach(GameObject prefab in PiecesClone)
+            {
+                if(prefab == null && !ReferenceEquals(prefab, null))
+                {
+                    PiecesClone.Remove(prefab);
+                }
+            }
             foreach (GameObject prefab in PiecesClone)
             {
                 int c = 0;
